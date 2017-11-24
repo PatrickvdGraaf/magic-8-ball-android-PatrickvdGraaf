@@ -5,11 +5,14 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.Size;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 
@@ -26,6 +29,10 @@ public class Magic8BallActivity extends AppCompatActivity implements SensorEvent
 	 */
     private static final float SHAKE_THRESHOLD_GRAVITY = 1.3f;
     private static final int SHAKE_SLOP_TIME_MS = 500;
+
+    private static final int ANIM_PREPARE_DURATION = 70;
+    private static final int ANIM_SHAKE_DURATION = 140;
+    private static final int ANIM_RESET_DURATION = 120;
 
     @VisibleForTesting
     protected final int[] ballsArray = {
@@ -79,8 +86,7 @@ public class Magic8BallActivity extends AppCompatActivity implements SensorEvent
      * Update the mImageViewBall with a randomly chosen image.
      */
     private void updateBallView() {
-        Random randomGen = new Random();
-        mImageViewBall.setImageResource(ballsArray[randomGen.nextInt(ballsArray.length)]);
+        setBallImage(ballsArray[new Random().nextInt(ballsArray.length)]);
     }
 
     /**
@@ -93,10 +99,70 @@ public class Magic8BallActivity extends AppCompatActivity implements SensorEvent
      * @param randomNum A randomly generated number from the test method. Used to set the Ball Image
      *                  from outside the Magic8BallActivity.
      */
+    @VisibleForTesting
     protected void updateBallView(@Size(min = 0, max = 5) int randomNum) {
-        int ballImage = ballsArray[randomNum];
-        mImageViewBall.setImageResource(ballImage);
-        mImageViewBall.setTag(ballImage);
+        setBallImage(ballsArray[randomNum]);
+    }
+
+    /**
+     * This method handles the animations while changing the image.
+     * Since the shaking will happen between -10% and -10%, I first start a prepare animation that
+     * moves the view to -10% and pun it there with setFillAfter(true)
+     * <p>
+     * Using AnimationListeners, the second, 'real' shaking animation starts right after the first
+     * one ends.
+     *
+     * @param image Image Drawable from the ballsArray
+     */
+    private void setBallImage(@DrawableRes final int image) {
+        Animation prepareAnimation = AnimationUtils.loadAnimation(getApplicationContext(),
+                R.anim.prepare);
+        prepareAnimation.setFillAfter(true);
+        prepareAnimation.setDuration(ANIM_PREPARE_DURATION);
+        final Animation shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(),
+                R.anim.shake);
+        shakeAnimation.setFillAfter(true);
+        shakeAnimation.setDuration(ANIM_SHAKE_DURATION);
+        shakeAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mImageViewBall.setImageResource(image);
+                mImageViewBall.setTag(image);
+
+                Animation resetAnimation = AnimationUtils.loadAnimation(getApplicationContext(),
+                        R.anim.reset);
+                resetAnimation.setFillAfter(true);
+                resetAnimation.setDuration(ANIM_RESET_DURATION);
+                mImageViewBall.startAnimation(resetAnimation);
+            }
+
+            @Override
+            public void onAnimationStart(Animation animation) {
+                //ignore
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+                //ignore
+            }
+        });
+        prepareAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mImageViewBall.startAnimation(shakeAnimation);
+            }
+
+            @Override
+            public void onAnimationStart(Animation animation) {
+                //ignore
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+                //ignore
+            }
+        });
+        mImageViewBall.startAnimation(prepareAnimation);
     }
 
     /**
@@ -143,6 +209,11 @@ public class Magic8BallActivity extends AppCompatActivity implements SensorEvent
     public void onPause() {
         mSensorManager.unregisterListener(this);
         super.onPause();
+    }
+
+    @VisibleForTesting
+    protected int getAnimationDuration() {
+        return ANIM_PREPARE_DURATION + ANIM_SHAKE_DURATION + ANIM_RESET_DURATION;
     }
 
     @Override

@@ -38,10 +38,17 @@ public class Magic8BallTest extends ActivityInstrumentationTestCase2<Magic8BallA
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                mActivity.mImageViewBall.setTag(-1);
+                final int NULL_TAG = -1;
+                mActivity.mImageViewBall.setTag(NULL_TAG);
                 if (mActivity.mListener != null) {
                     mActivity.mListener.onShake();
-                    assertNotSame(-1, mActivity.mImageViewBall.getTag());
+                    try {
+                        wait(mActivity.getAnimationDuration());
+                        assertNotSame(NULL_TAG, mActivity.mImageViewBall.getTag());
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        fail();
+                    }
                 }
             }
         });
