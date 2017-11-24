@@ -19,7 +19,7 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:gravity="center"
-        android:text="Make everyday decisions easier!"
+        android:text="@string/msg_ball_header"
         android:textColor="#fff"
         android:textSize="32sp"
         android:textStyle="bold"/>
@@ -40,7 +40,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:background="#3F51B5"
-        android:text="Ask"
+        android:text="@string/btn_ask"
         android:textColor="#fff"
         android:textSize="20sp"/>
 

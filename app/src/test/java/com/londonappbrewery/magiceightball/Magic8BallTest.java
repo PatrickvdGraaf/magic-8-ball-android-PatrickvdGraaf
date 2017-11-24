@@ -30,6 +30,10 @@ public class Magic8BallTest extends ActivityInstrumentationTestCase2<Magic8BallA
         assertNotNull("SeekBar for Elevation is null", mActivity.mImageViewBall);
     }
 
+    /**
+     * Test if the ballImage is updated when a shake occurs. Unfortunately, we can't recreate a
+     * Shake Event, so we can only call the listeners onShake() method.
+     */
     public void testShakeListener() {
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
@@ -43,6 +47,9 @@ public class Magic8BallTest extends ActivityInstrumentationTestCase2<Magic8BallA
         });
     }
 
+    /**
+     * Test if the button updates the ballImage.
+     */
     public void testAskButton() {
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override

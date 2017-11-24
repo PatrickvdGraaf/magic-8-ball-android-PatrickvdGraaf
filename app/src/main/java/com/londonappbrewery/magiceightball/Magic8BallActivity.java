@@ -6,6 +6,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.annotation.Size;
+import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -14,16 +15,19 @@ import android.widget.ImageView;
 
 import java.util.Random;
 
+/**
+ * This Activity shows the basic understanding of creating an Activity, implementing an Interface
+ * and updating an Image when the user preforms certain actions.
+ */
 public class Magic8BallActivity extends AppCompatActivity implements SensorEventListener {
     /*
      * The gForce that is necessary to register as shake.
 	 * Must be greater than 1G (one earth gravity unit).
-	 * You can install "G-Force", by Blake La Pierre
-	 * from the Google Play Store and run it to see how
-	 *  many G's it takes to register a shake
 	 */
     private static final float SHAKE_THRESHOLD_GRAVITY = 1.3f;
     private static final int SHAKE_SLOP_TIME_MS = 500;
+
+    @VisibleForTesting
     protected final int[] ballsArray = {
             R.drawable.ball1,
             R.drawable.ball2,
@@ -31,16 +35,15 @@ public class Magic8BallActivity extends AppCompatActivity implements SensorEvent
             R.drawable.ball4,
             R.drawable.ball5
     };
+    @VisibleForTesting
     protected Button mButtonAsk;
+    @VisibleForTesting
     protected ImageView mImageViewBall;
+    @VisibleForTesting
     protected OnShakeListener mListener;
     private SensorManager mSensorManager;
     private long mShakeTimestamp;
     private Sensor mAccelerometer;
-
-    public Magic8BallActivity(Sensor accelerometer) {
-        mAccelerometer = accelerometer;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,19 +71,27 @@ public class Magic8BallActivity extends AppCompatActivity implements SensorEvent
             });
         } else {
             Log.i("Magic8Ball", "Could not find System Service for SENSOR_SERVICE, " +
-                    "the device might not support this sensor.");
+                    "the device might not support sensors.");
         }
     }
 
+    /**
+     * Update the mImageViewBall with a randomly chosen image.
+     */
     private void updateBallView() {
         Random randomGen = new Random();
         mImageViewBall.setImageResource(ballsArray[randomGen.nextInt(ballsArray.length)]);
     }
 
     /**
-     * Used for testing in @Magic8BallTest
+     * Used for testing in Magic8BallTest. By defining the random number in the Test, we can
+     * check if the right image from the ballsArray is set into the mImageViewBall.
+     * <p>
+     * Since the Test can't call mImageViewBall.getImageResource, we put the id of the Drawable into
+     * the mImageViewBall Tag.
      *
-     * @param randomNum
+     * @param randomNum A randomly generated number from the test method. Used to set the Ball Image
+     *                  from outside the Magic8BallActivity.
      */
     protected void updateBallView(@Size(min = 0, max = 5) int randomNum) {
         int ballImage = ballsArray[randomNum];
@@ -88,6 +99,13 @@ public class Magic8BallActivity extends AppCompatActivity implements SensorEvent
         mImageViewBall.setTag(ballImage);
     }
 
+    /**
+     * If a listener exists (if the device has sensor services) we use the coordinates in the
+     * sensorEvent to determine whether a shake has occurred and if it was severe enough to
+     * trigger the updateBallView method.
+     *
+     * @param event SensorEvent indicating if and how much a device has moved/tilted/turned.
+     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (mListener != null) {
@@ -117,14 +135,12 @@ public class Magic8BallActivity extends AppCompatActivity implements SensorEvent
     @Override
     public void onResume() {
         super.onResume();
-        // Add the following line to register the Session Manager Listener onResume
         mSensorManager.registerListener(this, mAccelerometer,
                 SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
     public void onPause() {
-        // Add the following line to unregister the Sensor Manager onPause
         mSensorManager.unregisterListener(this);
         super.onPause();
     }
